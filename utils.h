@@ -82,8 +82,9 @@ struct ALResult{
 
 // Checking path
 /////////////////////////////////
-struct SimplePath{
+struct ComplexPath{
 	vector<int> initialValue;
+	vector<pair<int,vector<int>>> bannedValueList;
 	int finalValuePos;
 	int action;
 };
@@ -93,7 +94,7 @@ struct PotentialPath {
 	int action;
 	PotentialPath() : initialValue(2, vector<int>()) {}
 };
-	
+
 struct Path{
 	vector<int> initialValue;
 	vector<int> finalValue;

@@ -46,7 +46,7 @@ void printPath(Path path){
 	cout << endl;
 }
 
-void searchFunctionalPath(PotentialPath potentialPath, vector<SimplePath> currentPathList, int startPos, vector<vector<int>> &functionalPathList, vector<int> pathList){
+void searchFunctionalPath(PotentialPath potentialPath, vector<ComplexPath> currentPathList, int startPos, vector<vector<int>> &functionalPathList, vector<int> pathList){
 
 	//cout << "Act " << potentialPath.action << endl;
 	
@@ -85,13 +85,53 @@ void searchFunctionalPath(PotentialPath potentialPath, vector<SimplePath> curren
 	//cout << endl;
 }
 
+ComplexPath getComplexPath(Condition condition, int finalPos){
+	ComplexPath newPath;
+	vector<int> initialValue = {-1,-1};
+	printObservationList(condition.observationList);
+	
+	for(Observation observation : condition.observationList){
+		if(observation.set==0) newPath.action = observation.value;
+		if(observation.set==1) initialValue[observation.position] = observation.value;
+	}
+	
+	newPath.initialValue = initialValue;
+	newPath.finalValuePos = finalPos;
+	
+	return newPath;
+	
+}
+
+vector<pair<int,vector<int>>> getBannedValueList(Logic logic){
+
+	cout << "Studying opposite " << logic.outcome << "..." << endl;
+
+	vector<pair<int,vector<int>>> bannedValueList;
+
+	for(Condition condition : logic.conditionList){
+		vector<int> bannedValue = {-1, -1};
+		int bannedAction = -1;
+		for(Observation observation : condition.observationList){
+			if(observation.set==0) bannedAction = observation.value;
+			if(observation.set==1) bannedValue[observation.position] = observation.value;
+		}
+		bannedValueList.push_back(make_pair(bannedAction, bannedValue));
+	}
+	
+	cout << "Banned values:" << endl;
+	for(auto bannedValue : bannedValueList){
+		cout << bannedValue.first << " - ";
+		for(auto value : bannedValue.second) cout << value << " ";
+		cout << endl;
+	}
+	
+	return bannedValueList;
+}
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
 void improveMap(Path path){
-
-	
-
 }
 
 /////////////////////////////////////////////////////////////
@@ -99,7 +139,7 @@ void improveMap(Path path){
 
 void createPath(vector<int> endState){
 	
-	vector<SimplePath> currentPathList;
+	vector<ComplexPath> currentPathList;
 	
 	cout << "Ending:" << endl;
 	for(int element : endState) cout << element << " ";
@@ -108,26 +148,35 @@ void createPath(vector<int> endState){
 	
 	for(int i=0; i<endState.size(); i++){
 		cout << "<VAL " << i << ">" << endl;
-		for(Logic logic : linkSuperList[1][i].logicList){
+		for(int j=0; j<linkSuperList[1][i].logicList.size(); j++){
+			Logic logic = linkSuperList[1][i].logicList[j];
 			if(logic.outcome!=endState[i]) continue;
 			
 			cout << "Known outcome: " << logic.outcome << endl;
 			
-			for(Condition condition : logic.conditionList){
-				SimplePath newPath;
-				vector<int> initialValue = {-1,-1};
-				printObservationList(condition.observationList);
-				
-				for(Observation observation : condition.observationList){
-					if(observation.set==0) newPath.action = observation.value;
-					if(observation.set==1) initialValue[observation.position] = observation.value;
-				}
-				
-				newPath.initialValue = initialValue;
-				newPath.finalValuePos = i;
-				currentPathList.push_back(newPath);
-				
+			// Look for banned states
+			vector<pair<int,vector<int>>> bannedValueList;
+			for(int k=j+1; k<linkSuperList[1][i].logicList.size(); k++){
+				bannedValueList = getBannedValueList(linkSuperList[1][i].logicList[k]);
 			}
+			
+			// Look for paths that can be directly reached
+			for(Condition condition : logic.conditionList){
+				ComplexPath newPath = getComplexPath(condition,i);
+				newPath.bannedValueList = bannedValueList;
+				currentPathList.push_back(newPath);
+			}
+			
+			if(logic.conditionList.size()==0){
+				cout << "Works for act -1: {-1, -1}" << endl;
+				ComplexPath newPath;
+				newPath.initialValue = {-1,-1};
+				newPath.bannedValueList = bannedValueList;
+				newPath.finalValuePos = i;
+				newPath.action = -1;
+				currentPathList.push_back(newPath);
+			}
+			
 		}
 	}
 	
@@ -135,7 +184,7 @@ void createPath(vector<int> endState){
 	
 	cout << endl;
 	for(int i=0; i<currentPathList.size(); i++){
-		SimplePath path = currentPathList[i];
+		ComplexPath path = currentPathList[i];
 		cout << "  -Initial: ";
 		for(int val : path.initialValue) cout << val << " ";
 		cout << endl;
@@ -145,7 +194,7 @@ void createPath(vector<int> endState){
 		
 		bool pathFound = false;
 		for(auto &potentialPath : potentialPathList){
-			if(potentialPath.action == path.action){
+			if(potentialPath.action == path.action || potentialPath.action == -1 || path.action == -1){
 				potentialPath.initialValue[path.finalValuePos].push_back(i);
 				pathFound = true;
 				break;
@@ -171,6 +220,7 @@ void createPath(vector<int> endState){
 			cout << "- Path: ";
 			for(int val : functionalPath) cout << val << " ";
 			cout << endl;
+			
 			
 			
 			vector<int> possibleValue(currentPathList[0].initialValue.size(), -1);
@@ -253,7 +303,7 @@ vector<int> searchPath(){
 	
 	vector<int> currentState = line.getResult();
 	
-	createPath({3,3});
+	createPath({0,3});
 	
 	exit(1);
 	
