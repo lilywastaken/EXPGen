@@ -18,6 +18,8 @@ Line line(commandSize,resultSize,rewardSize);
 vector<vector<StateMem>> stateMemSuperList;
 vector<vector<Link>> linkSuperList;
 vector<Path> pathList;
+vector<SuperPath> superPathList;
+
 vector<int> actionList = {0, 1, 2};
 
 int main(){
@@ -51,7 +53,6 @@ int main(){
 	
 	auto start_time = chrono::high_resolution_clock::now();
 	
-	cout << "WORKING" << endl;
 	coreProcess();
 	
 	/*

@@ -8,6 +8,9 @@ int searchBestPath(vector<int> currentState){
 	for(int i=0; i<pathList.size(); i++){
 		Path path = pathList[i];
 		if(path.initialValue != currentState) continue;
+		
+		cout << "PATH FOUND!!" << endl;
+		exit(1);
 		if(path.reward > bestReward){
 			bestReward = path.reward;
 			bestPath = i;
@@ -32,109 +35,183 @@ vector<pair<int,int>> defineConsequence(int action, vector<int> positionList){
 	return output;
 }
 
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
+void printPath(Path path){
+	cout << "  -Initial: ";
+	for(int val : path.initialValue) cout << val << " ";
+	cout << endl;
+	cout << "  -Final: ";
+	for(int val : path.finalValue) cout << val << " ";
+	cout << endl;
+	cout << "  -Action: " << path.action << endl;
+	cout << endl;
+}
 
-void createPath(vector<Condition> conditionList){
+void searchFunctionalPath(PotentialPath potentialPath, vector<SimplePath> currentPathList, int startPos, vector<vector<int>> &functionalPathList, vector<int> pathList){
 
-	vector<Path> currentPathList;
+	//cout << "Act " << potentialPath.action << endl;
 	
-	cout << endl << "Condition to reach:" << endl;
-	for(Condition condition : conditionList) printObservationList(condition.observationList);
+	int i = startPos;
+	//cout << "--> " << i << endl;
 
-	Condition condition = conditionList[0];
-	
-	for(Observation observation : condition.observationList){
-		cout << observation.set << "-" << observation.position << "-" << observation.value << endl;
-		for(Logic logic : linkSuperList[observation.set][observation.position].logicList){
-			if(logic.outcome!=observation.value) continue;
-
-			cout << "Known outcome: " << logic.outcome << endl;
-			for(Condition conditionKnown : logic.conditionList){
-				printObservationList(conditionKnown.observationList);
-				
-				Path newPath;
-				newPath.finalValue = {3,3};
-				newPath.initialValue = {-1,-1};
-				for(Observation observation : conditionKnown.observationList){
-					if(observation.set==0) newPath.action.push_back(observation.value);
-					else newPath.initialValue[observation.position] = observation.value;
-				}
-				currentPathList.push_back(newPath);
-				break;
-			}
-			break;
-		}
-		break;
-	}
-	
-	vector<vector<int>> valueRange;
-	
-	cout << endl << "=== [SUM UP] ===" << endl;
-	for(Path path : currentPathList){
-		cout << "Initial: ";
-		for(int val : path.initialValue) cout << val << " ";
-		cout << endl;
-		cout << "Final: ";
-		for(int val : path.finalValue) cout << val << " ";
-		cout << endl;
-		cout << "Action: ";
-		for(int val : path.action) cout << val << " ";
-		cout << endl;
+	vector<int> initialValue = potentialPath.initialValue[i];
+	//cout << " Pos " << i << endl;
+	for(int val : initialValue){
 		
-		for(int i=0; i<path.initialValue.size(); i++){
-			int val = path.initialValue[i];
-			if(val!=-1){
-				valueRange.push_back({val});
-				continue;
+		pathList.push_back(val);
+		
+		//cout << "  -> PATH" << endl;
+		vector<int> possibleValue(currentPathList[0].initialValue.size(), -1);
+		for(int path : pathList){
+			//cout << "  ID " << path << ": ";
+			for(int i=0; i<currentPathList[path].initialValue.size(); i++){
+				int val = currentPathList[path].initialValue[i];
+				//cout << val << " ";
+				if(possibleValue[i] != -1 && val !=-1 && possibleValue[i] != val) return;
+				if(val!=-1) possibleValue[i] = val;
 			}
-			
-			vector<int> possibleVal;
-			
-			for(Logic logic : linkSuperList[1][i].logicList){
-				if(logic.outcome!=path.finalValue[i]) continue;
-				
-				for(Condition conditionKnown : logic.conditionList){
-					for(Observation observation : conditionKnown.observationList){
-						if(observation.set==0){
-							if(observation.value!=path.action[0]) break;
-							cout << "Known outcome: " << logic.outcome << endl;
-						}
-						if(observation.set==1 && observation.position==i){
-							cout << "-- origin: " << observation.value << endl;
-							possibleVal.push_back(observation.value);
-						}
-					}
-				}
-			}
-			valueRange.push_back(possibleVal);
+			//cout << endl;
 		}
+		
+		if(startPos==potentialPath.initialValue.size()-1){
+			functionalPathList.push_back(pathList);
+			//cout << "RETURN VAL" << endl;
+			return;
+		}
+		//cout << "ENTER FUNC" << endl;
+		searchFunctionalPath(potentialPath, currentPathList, i+1, functionalPathList, pathList);
+		
+		
 	}
-	
-	for(int i=0; i<valueRange.size(); i++){
-		cout << "TERM " << i << ":" << endl;
-		for(int term : valueRange[i]) cout << term << " ";
-		cout << endl;
-	}
-	
-	// linkSuperList[1][0] = initLinkResult1();
-	// linkSuperList[1][1] = initLinkResult2();
-	
-	exit(1);
-	
-	Path newPath;
-	newPath.initialValue = {0,0};
-	newPath.finalValue = {3,3};
-	newPath.action = {1,1,1,2,1,1,1};
-	newPath.reward = 6;
-	
-	pathList.push_back(newPath);
+	//cout << endl;
 }
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-vector<Condition> getBestConditionList(){
+void improveMap(Path path){
+
+	
+
+}
+
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+
+void createPath(vector<int> endState){
+	
+	vector<SimplePath> currentPathList;
+	
+	cout << "Ending:" << endl;
+	for(int element : endState) cout << element << " ";
+	cout << endl;
+	
+	
+	for(int i=0; i<endState.size(); i++){
+		cout << "<VAL " << i << ">" << endl;
+		for(Logic logic : linkSuperList[1][i].logicList){
+			if(logic.outcome!=endState[i]) continue;
+			
+			cout << "Known outcome: " << logic.outcome << endl;
+			
+			for(Condition condition : logic.conditionList){
+				SimplePath newPath;
+				vector<int> initialValue = {-1,-1};
+				printObservationList(condition.observationList);
+				
+				for(Observation observation : condition.observationList){
+					if(observation.set==0) newPath.action = observation.value;
+					if(observation.set==1) initialValue[observation.position] = observation.value;
+				}
+				
+				newPath.initialValue = initialValue;
+				newPath.finalValuePos = i;
+				currentPathList.push_back(newPath);
+				
+			}
+		}
+	}
+	
+	vector<PotentialPath> potentialPathList;
+	
+	cout << endl;
+	for(int i=0; i<currentPathList.size(); i++){
+		SimplePath path = currentPathList[i];
+		cout << "  -Initial: ";
+		for(int val : path.initialValue) cout << val << " ";
+		cout << endl;
+		cout << "  -Final: " << path.finalValuePos << endl;
+		cout << "  -Action: " << path.action << endl;
+		cout << endl;
+		
+		bool pathFound = false;
+		for(auto &potentialPath : potentialPathList){
+			if(potentialPath.action == path.action){
+				potentialPath.initialValue[path.finalValuePos].push_back(i);
+				pathFound = true;
+				break;
+			}
+		}
+		if(!pathFound){
+			PotentialPath potentialPath;
+			potentialPath.action = path.action;
+			potentialPath.initialValue[path.finalValuePos].push_back(i);
+			potentialPathList.push_back(potentialPath);
+		}
+	}
+	
+	cout << "==List==" << endl;
+	for(PotentialPath potentialPath : potentialPathList){
+	
+		vector<vector<int>> functionalPathList;
+		searchFunctionalPath(potentialPath, currentPathList, 0, functionalPathList, vector<int>());
+		
+		cout << "Action " << potentialPath.action << endl;
+		
+		for(vector<int> functionalPath : functionalPathList){
+			cout << "- Path: ";
+			for(int val : functionalPath) cout << val << " ";
+			cout << endl;
+			
+			
+			vector<int> possibleValue(currentPathList[0].initialValue.size(), -1);
+			for(int path : functionalPath){
+				for(int i=0; i<currentPathList[path].initialValue.size(); i++){
+					int val = currentPathList[path].initialValue[i];
+					if(possibleValue[i] != -1 && val !=-1 && possibleValue[i] != val) return;
+					if(val!=-1) possibleValue[i] = val;
+				}
+			}
+			
+			cout << "- Vals: ";
+			for(int val : possibleValue) cout << val << " ";
+			cout << endl;
+			
+			
+			Path newPath;
+			
+			newPath.action = potentialPath.action;
+			newPath.initialValue = possibleValue;
+			newPath.finalValue = endState;
+			
+			pathList.push_back(newPath);
+			
+			improveMap(newPath);
+		}
+		
+		cout << "=====" << endl;
+	}
+	
+	cout << endl << "=== FINAL SUM UP ===" << endl;
+	for(auto path : pathList){
+		cout << "Action " << path.action << ": ";
+		for(int val : path.initialValue) cout << val << " ";
+		cout << " -> ";
+		for(int val : path.finalValue) cout << val << " ";
+		cout << endl;
+	}	
+}
+
+vector<vector<int>> getBestStateList(){
 
 	if(linkSuperList[2][0].logicList.size()==0) return {};
 	
@@ -150,26 +227,45 @@ vector<Condition> getBestConditionList(){
 		}
 	}
 	
-	return conditionListBestState;
+	vector<vector<int>> possibleEndingList;
+	
+	for(Condition condition : conditionListBestState){		
+		vector<int> currentEnding = {-1,-1};
+		for(int i=0; i<condition.observationList.size(); i++){
+			Observation observation = condition.observationList[i];
+			currentEnding[observation.position] = observation.value;
+		}
+		possibleEndingList.push_back(currentEnding);
+	}
+	
+	return possibleEndingList;
 
 }
 
 vector<int> searchPath(){
 	cout << endl << "[SEARCH PATH]" << endl;
 	
-	vector<Condition> bestConditionList = getBestConditionList();
+	vector<vector<int>> bestStateList = getBestStateList();
+	
+	vector<int> bestState = bestStateList[0];
 	
 	/////////////////////////////////////
 	
 	vector<int> currentState = line.getResult();
 	
-	while(searchBestPath(currentState)==-1){
-		createPath(bestConditionList);
-	}
+	createPath({3,3});
+	
+	exit(1);
+	
+	
+	/*while(searchBestPath(currentState)==-1){
+		createPath(bestStateList);
+	}*/
 	int bestPath = searchBestPath(currentState);
 	
-	if(bestPath==-1) return {};
-	return pathList[bestPath].action;
+	return {};
+	//if(bestPath==-1) return {};
+	//return pathList[bestPath].action;
 	
 }
 

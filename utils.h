@@ -82,10 +82,27 @@ struct ALResult{
 
 // Checking path
 /////////////////////////////////
+struct SimplePath{
+	vector<int> initialValue;
+	int finalValuePos;
+	int action;
+};
+	
+struct PotentialPath {
+	vector<vector<int>> initialValue;
+	int action;
+	PotentialPath() : initialValue(2, vector<int>()) {}
+};
+	
 struct Path{
 	vector<int> initialValue;
 	vector<int> finalValue;
-	vector<int> action;
+	int action;
+	int reward;
+};
+
+struct SuperPath{
+	vector<Path> pathList;
 	int reward;
 };
 
@@ -191,6 +208,7 @@ extern vector<vector<StateMem>> stateMemSuperList;
 extern vector<vector<Link>> linkSuperList;
 
 extern vector<Path> pathList;
+extern vector<SuperPath> superPathList;
 
 extern vector<int> actionList;
 
