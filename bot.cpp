@@ -21,6 +21,7 @@ vector<Path> pathList;
 vector<SuperPath> superPathList;
 
 vector<int> actionList = {0, 1, 2};
+vector<int> valueList = {0, 1, 2, 3};
 
 int main(){
 

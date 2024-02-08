@@ -82,23 +82,26 @@ struct ALResult{
 
 // Checking path
 /////////////////////////////////
-struct ComplexPath{
+
+struct Transition{
 	vector<int> initialValue;
-	vector<pair<int,vector<int>>> bannedValueList;
-	int finalValuePos;
 	int action;
 };
-	
-struct PotentialPath {
-	vector<vector<int>> initialValue;
+
+struct StepPath{
+	Transition transition;
+	int finalValuePos;
+};
+
+struct PotentialPath{
+	vector<vector<int>> initialValueList;
 	int action;
-	PotentialPath() : initialValue(2, vector<int>()) {}
+	PotentialPath() : initialValueList(2, vector<int>()) {}
 };
 
 struct Path{
-	vector<int> initialValue;
+	Transition transition;
 	vector<int> finalValue;
-	int action;
 	int reward;
 };
 
@@ -107,83 +110,6 @@ struct SuperPath{
 	int reward;
 };
 
-// Finding pattern
-/////////////////////////////////
-
-/*
-
-==========================================================================
-
-WHAT I WANT:
-
-ACT 0 : ([0](0) => [0](-1))         for all
-ACT 1 : ([0](0) => [0](-1) + 1)     if [0](-1) E [0:2]
-ACT 1 : ([0](0) => 0)               if [0](-1) == 3
-ACT 2 : ([0](0) => 0)               for all
-
-
-==========================================================================
-
-
-OTHER THAN 1
-If: [set 0: 0/0], [(-1) set 1: 0/2], End
-If: [set 0: 0/0], [(-1) set 1: 0/3], End
-
-Set 1 - [0] : 1 if 1 at [0] during T-1 and [ACT 0]
-  -> [[ Set 1 - [0] : x if x at [0]   during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if 1 at [x-1] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x at [x-1] during T-1 and [ACT 1] ]] ?
-
-Set 1 - [0] : 1 if 0 at [0] during T-1 and [ACT 1]
-  -> [[ Set 1 - [0] : x if x-1 at [0]   during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if 0   at [x-1] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x-1 at [x-1] during T-1 and [ACT 1] ]] ?
-
-==========================================================================
-
-Set 1 - [0] : 2 if 2 at [0] during T-1 and [ACT 0]
-  -> [[ Set 1 - [0] : x if x at [0]   during T-1 and [ACT 1] ]] !!!
-  -> [[ Set 1 - [0] : x if 2 at [x-2] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x at [x-2] during T-1 and [ACT 1] ]] ?
-
-Set 1 - [0] : 2 if 1 at [0] during T-1 and [ACT 1]
-  -> [[ Set 1 - [0] : x if x-1 at [0]   during T-1 and [ACT 1] ]] !!!
-  -> [[ Set 1 - [0] : x if 1   at [x-2] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x-1 at [x-2] during T-1 and [ACT 1] ]] ?
-
-==========================================================================
-
-Set 1 - [0] : 3 if 3 at [0] during T-1 and [ACT 0]
-  -> [[ Set 1 - [0] : x if x at [0]   during T-1 and [ACT 1] ]] !!!
-  -> [[ Set 1 - [0] : x if 3 at [x-3] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x at [x-3] during T-1 and [ACT 1] ]] ?
-
-Set 1 - [0] : 3 if 2 at [0] during T-1 and [ACT 1]
-  -> [[ Set 1 - [0] : x if x-1 at [0]   during T-1 and [ACT 1] ]] !!!
-  -> [[ Set 1 - [0] : x if 2   at [x-3] during T-1 and [ACT 1] ]] ?
-  -> [[ Set 1 - [0] : x if x-1 at [x-3] during T-1 and [ACT 1] ]] ?
-  
-  
-==========================================================================
-SIMILAR
-==========================================================================
-
-  -> [[ Set 1 - [0] : x if x at [0] during T-1 and [ACT 1] ]]
-  -> [[ Set 1 - [0] : x if x at [0] during T-1 and [ACT 1] ]]
-  -> [[ Set 1 - [0] : x if x at [0] during T-1 and [ACT 1] ]]
-  
-  -> [[ Set 1 - [0] : x if x-1 at [0] during T-1 and [ACT 1] ]]
-  -> [[ Set 1 - [0] : x if x-1 at [0] during T-1 and [ACT 1] ]]
-  -> [[ Set 1 - [0] : x if x-1 at [0] during T-1 and [ACT 1] ]]
-
-==========================================================================
-RESULT
-==========================================================================
-
-[[ Set 1 - [0] : x if x at [0]   during T-1 and [ACT 1] ]]  FOR x E[1,2,3]
-[[ Set 1 - [0] : x if x-1 at [0] during T-1 and [ACT 1] ]]  FOR x E[1,2,3]
-
-*/
 
 
 //FUNCTIONS
@@ -212,6 +138,7 @@ extern vector<Path> pathList;
 extern vector<SuperPath> superPathList;
 
 extern vector<int> actionList;
+extern vector<int> valueList;
 
 extern int timeCount;
 extern int action;
