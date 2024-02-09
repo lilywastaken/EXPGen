@@ -1,3 +1,3 @@
 # Box
 
-# I hope this project ends well
+# Shaping a future for AI
