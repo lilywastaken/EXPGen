@@ -18,18 +18,6 @@ int searchBestPath(vector<int> currentState){
 	int bestReward = 0;
 	int bestPath = -1;
 	
-	for(int i=0; i<pathList.size(); i++){
-		Path path = pathList[i];
-		if(path.transition.initialValue != currentState) continue;
-		
-		cout << "PATH FOUND!!" << endl;
-		exit(1);
-		if(path.reward > bestReward){
-			bestReward = path.reward;
-			bestPath = i;
-		}
-	}
-	
 	return bestPath;
 }
 
@@ -214,10 +202,13 @@ bool filterPath(){
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-void createPath(vector<int> endState){
+vector<Map> createPath(Map &map){
 
-	pathList.clear();
-	
+	vector<Map> newMapList;
+
+	vector<int> endState = map.state;
+
+	vector<Path> pathList;
 	vector<StepPath> currentPathList;	
 	
 	for(int i=0; i<endState.size(); i++){
@@ -279,14 +270,6 @@ void createPath(vector<int> endState){
 		}
 	}
 	
-	/*for(PotentialPath potentialPath : potentialPathList){
-		cout << potentialPath.action << endl;
-		for(vector<int> initialValue : potentialPath.initialValueList){
-			for(int val : initialValue) cout << val << " ";
-			cout << endl;
-		}
-	}*/
-	
 	for(PotentialPath potentialPath : potentialPathList){
 	
 		vector<vector<int>> functionalPathList;
@@ -304,14 +287,37 @@ void createPath(vector<int> endState){
 		}
 	}
 	
-	cout << endl << "=== FINAL SUM UP ===" << endl;
+	//cout << endl << "=== FINAL SUM UP ===" << endl;
 	for(auto path : pathList){
-		cout << "Action " << path.transition.action << ": ";
-		for(int val : path.transition.initialValue) cout << val << " ";
-		cout << " -> ";
-		for(int val : path.finalValue) cout << val << " ";
-		cout << endl;
-	}	
+		map.inputTransitionList.push_back(path.transition);
+		
+		// Check if found value is mapped
+		bool mapExist = false;
+		for(Map &myMap : mapList){
+			if(myMap.state == path.transition.initialValue){
+				mapExist = true;
+				Transition newTransition;
+				newTransition.initialValue = map.state;
+				newTransition.action = path.transition.action;
+				myMap.outputTransitionList.push_back(newTransition);
+			}
+		}
+		// If doesn't exist : create one, generate outputs
+		if(!mapExist){
+			Transition newTransition;
+			newTransition.initialValue = map.state;
+			newTransition.action = path.transition.action;
+			Map newMap;
+			newMap.state = path.transition.initialValue;
+			newMap.outputTransitionList.push_back(newTransition);
+			newMapList.push_back(newMap);
+		}
+	}
+	
+	map.examined = true;
+	
+	return newMapList;
+	
 }
 
 
@@ -319,22 +325,47 @@ void createPath(vector<int> endState){
 /////////////////////////////////////////////////////////////
 
 vector<int> searchPath(){
-	cout << endl << "[SEARCH PATH]" << endl;
+	cout << endl << "[SEARCH PATH]" << endl << endl;
 	
 	vector<vector<int>> bestStateList = getBestStateList();
 	vector<int> bestState = bestStateList[0];
 	
+	mapList.emplace_back(Map{bestState});
+	
 	/////////////////////////////////////
 	
-	createPath({3,3});
-	createPath({2,3});
-	createPath({1,3});
-	createPath({0,3});
-	createPath({3,0});
-	createPath({2,0});
-	createPath({1,0});
+	bool allExamined=false;
+	while(!allExamined){
+		allExamined=true;
+		for(Map &map : mapList){
+			if(!map.examined){				
+				vector<Map> newMapList = createPath(map);
+				for(Map newMap: newMapList) mapList.push_back(newMap);
+				allExamined=false;
+			}
+		}
+	}
 	
-	exit(1);
+	for(Map map : mapList){
+		cout << "State: ";
+		for(int val : map.state) cout << val << " ";
+		cout << endl;
+		cout << "Coming from:" << endl;
+		for(Transition transition : map.inputTransitionList){
+			cout << "[ACT " << transition.action << "] ";
+			for(int val : transition.initialValue) cout << val << " ";
+			cout << endl;
+		}
+		cout << "Leading to:" << endl;
+		for(Transition transition : map.outputTransitionList){
+			cout << "[ACT " << transition.action << "] ";
+			for(int val : transition.initialValue) cout << val << " ";
+			cout << endl;
+		}
+		cout << endl;
+	}
+	
+	//exit(1);
 	
 	return {};
 	

@@ -17,8 +17,7 @@ Line line(commandSize,resultSize,rewardSize);
 
 vector<vector<StateMem>> stateMemSuperList;
 vector<vector<Link>> linkSuperList;
-vector<Path> pathList;
-vector<SuperPath> superPathList;
+vector<Map> mapList;
 
 vector<int> actionList = {0, 1, 2};
 vector<int> valueList = {0, 1, 2, 3};

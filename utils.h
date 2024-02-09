@@ -105,9 +105,11 @@ struct Path{
 	int reward;
 };
 
-struct SuperPath{
-	vector<Path> pathList;
-	int reward;
+struct Map{
+	vector<int> state;
+	vector<Transition> inputTransitionList;
+	vector<Transition> outputTransitionList;
+	bool examined = false;
 };
 
 
@@ -134,8 +136,7 @@ extern Line line;
 extern vector<vector<StateMem>> stateMemSuperList;
 extern vector<vector<Link>> linkSuperList;
 
-extern vector<Path> pathList;
-extern vector<SuperPath> superPathList;
+extern vector<Map> mapList;
 
 extern vector<int> actionList;
 extern vector<int> valueList;
