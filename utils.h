@@ -26,9 +26,9 @@ struct Observation{
     int set;
     int position;
     int value;
-    int relativeTime;
+    int shift;
     bool operator==(const Observation& rhs) const {
-        return (set == rhs.set) && (position == rhs.position) && (value == rhs.value) && (relativeTime == rhs.relativeTime);
+        return (set == rhs.set) && (position == rhs.position) && (value == rhs.value) && (shift == rhs.shift);
     }
 };
 
@@ -88,6 +88,11 @@ struct Transition{
 	int action;
 };
 
+struct Navigation{
+	vector<int> state;
+	vector<int> actionList;
+};
+
 struct StepPath{
 	Transition transition;
 	int finalValuePos;
@@ -96,7 +101,7 @@ struct StepPath{
 struct PotentialPath{
 	vector<vector<int>> initialValueList;
 	int action;
-	PotentialPath() : initialValueList(2, vector<int>()) {}
+	PotentialPath(int resultSize) : initialValueList(resultSize, vector<int>()) {}
 };
 
 struct Path{
@@ -107,11 +112,10 @@ struct Path{
 
 struct Map{
 	vector<int> state;
-	vector<Transition> inputTransitionList;
-	vector<Transition> outputTransitionList;
+	vector<Navigation> inputNavigationList;
+	vector<Navigation> outputNavigationList;
 	bool examined = false;
 };
-
 
 
 //FUNCTIONS

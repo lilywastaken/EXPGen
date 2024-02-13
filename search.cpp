@@ -1,15 +1,29 @@
 #include "search.h"
 
-// Display path
-void printPath(Path path){
-	cout << "  -Initial: ";
-	for(int val : path.transition.initialValue) cout << val << " ";
-	cout << endl;
-	cout << "  -Final: ";
-	for(int val : path.finalValue) cout << val << " ";
-	cout << endl;
-	cout << "  -Action: " << path.transition.action << endl;
-	cout << endl;
+// Display full map
+void printMapList(){
+	for(Map map : mapList){
+		cout << "State: ";
+		for(int val : map.state) cout << val << " ";
+		cout << endl;
+		cout << "Coming from:" << endl;
+		for(Navigation navigation : map.inputNavigationList){
+			cout << "[ACT ";
+			for(int action : navigation.actionList) cout << action << " ";
+			cout << "] ";
+			for(int val : navigation.state) cout << val << " ";
+			cout << endl;
+		}
+		cout << "Leading to:" << endl;
+		for(Navigation navigation : map.outputNavigationList){
+			cout << "[ACT ";
+			for(int action : navigation.actionList) cout << action << " ";
+			cout << "] ";
+			for(int val : navigation.state) cout << val << " ";
+			cout << endl;
+		}
+		cout << endl;
+	}
 }
 
 // Search if any path is linked to initial value
@@ -34,14 +48,14 @@ vector<vector<int>> getBestStateList(){
 		if(logic.outcome > bestReward){
 			bestReward = logic.outcome;
 			conditionListBestState = logic.conditionList;
-			break;
 		}
 	}
 	
 	vector<vector<int>> possibleEndingList;
 	
-	for(Condition condition : conditionListBestState){		
-		vector<int> currentEnding = {-1,-1};
+	for(Condition condition : conditionListBestState){
+	
+		vector<int> currentEnding(resultSize, -1);
 		for(int i=0; i<condition.observationList.size(); i++){
 			Observation observation = condition.observationList[i];
 			currentEnding[observation.position] = observation.value;
@@ -75,6 +89,28 @@ void searchFunctionalPath(PotentialPath potentialPath, vector<StepPath> currentP
 	}
 }
 
+vector<vector<int>> deduceAllState(vector<int> originalState){
+
+	vector<vector<int>> stateList = {originalState};
+	
+	for(int i=0; i<originalState.size(); i++){
+		vector<vector<int>> newStateList;
+		
+		for(vector<int> state : stateList){
+			if(originalState[i] == -1){
+				for(int value : valueList){
+					vector<int> newState = state;
+					newState[i] = value;
+					newStateList.push_back(newState);
+				}
+			}
+			else newStateList.push_back(state);
+		}
+		stateList = newStateList;
+	}
+	
+	return stateList;
+}
 
 vector<Transition> deduceAllTransition(Transition originalTransition){
 	
@@ -89,6 +125,7 @@ vector<Transition> deduceAllTransition(Transition originalTransition){
 	
 	for(int i=0; i<originalTransition.initialValue.size(); i++){
 		vector<Transition> newTransitionList;
+		
 		for(Transition transition : transitionList){
 			if(transition.initialValue[i] == -1){
 				for(int value : valueList){
@@ -112,7 +149,7 @@ vector<StepPath> getStepPathList(Condition condition, int finalPos, vector<Trans
 	//printObservationList(condition.observationList);
 	
 	StepPath originalStepPath;
-	vector<int> initialValue = {-1,-1};
+	vector<int> initialValue(resultSize, -1);
 	int originalAction = -1;
 	
 	for(Observation observation : condition.observationList){
@@ -165,7 +202,7 @@ vector<Transition> getBannedTransitionList(Logic logic){
 	vector<Transition> bannedTransitionList;
 
 	for(Condition condition : logic.conditionList){
-		vector<int> bannedState = {-1, -1};
+		vector<int> bannedState(resultSize, -1);
 		int bannedAction = -1;
 		for(Observation observation : condition.observationList){
 			if(observation.set==0) bannedAction = observation.value;
@@ -199,14 +236,11 @@ bool filterPath(){
 	return false;
 }
 
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-vector<Map> createPath(Map &map){
+vector<Map> createPath(Map &currentMap){
 
 	vector<Map> newMapList;
 
-	vector<int> endState = map.state;
+	vector<int> endState = currentMap.state;
 
 	vector<Path> pathList;
 	vector<StepPath> currentPathList;	
@@ -236,12 +270,10 @@ vector<Map> createPath(Map &map){
 				vector<StepPath> newStepPathList = getStepPathList(Condition(),i,bannedTransitionList);
 				for(StepPath stepPath : newStepPathList) currentPathList.push_back(stepPath);
 			}
-			
 		}
-		
 	}
 	
-	vector<PotentialPath> potentialPathList;
+	vector<PotentialPath> potentialPathList(resultSize, PotentialPath(resultSize));
 	
 	for(int i=0; i<currentPathList.size(); i++){
 	
@@ -263,7 +295,7 @@ vector<Map> createPath(Map &map){
 			}
 		}
 		if(!pathFound){
-			PotentialPath potentialPath;
+			PotentialPath potentialPath(resultSize);
 			potentialPath.action = path.transition.action;
 			potentialPath.initialValueList[path.finalValuePos].push_back(i);
 			potentialPathList.push_back(potentialPath);
@@ -273,7 +305,7 @@ vector<Map> createPath(Map &map){
 	for(PotentialPath potentialPath : potentialPathList){
 	
 		vector<vector<int>> functionalPathList;
-		searchFunctionalPath(potentialPath, currentPathList, functionalPathList, 0, {-1,-1}, vector<int>());
+		searchFunctionalPath(potentialPath, currentPathList, functionalPathList, 0, vector<int>(resultSize, -1), vector<int>());
 		
 		for(vector<int> functionalPath : functionalPathList){
 			
@@ -289,51 +321,77 @@ vector<Map> createPath(Map &map){
 	
 	//cout << endl << "=== FINAL SUM UP ===" << endl;
 	for(auto path : pathList){
-		map.inputTransitionList.push_back(path.transition);
+		Navigation newNavigation;
+		newNavigation.state = path.transition.initialValue;
+		newNavigation.actionList = {path.transition.action};
+		currentMap.inputNavigationList.push_back(newNavigation);
 		
 		// Check if found value is mapped
 		bool mapExist = false;
-		for(Map &myMap : mapList){
-			if(myMap.state == path.transition.initialValue){
+		for(Map &map : mapList){
+			if(map.state == path.transition.initialValue){
 				mapExist = true;
-				Transition newTransition;
-				newTransition.initialValue = map.state;
-				newTransition.action = path.transition.action;
-				myMap.outputTransitionList.push_back(newTransition);
+				Navigation newNavigation;
+				newNavigation.state = endState;
+				newNavigation.actionList = {path.transition.action};
+				map.outputNavigationList.push_back(newNavigation);
 			}
 		}
 		// If doesn't exist : create one, generate outputs
 		if(!mapExist){
-			Transition newTransition;
-			newTransition.initialValue = map.state;
-			newTransition.action = path.transition.action;
+			Navigation newNavigation;
+			newNavigation.state = currentMap.state;
+			newNavigation.actionList = {path.transition.action};
 			Map newMap;
 			newMap.state = path.transition.initialValue;
-			newMap.outputTransitionList.push_back(newTransition);
+			newMap.outputNavigationList.push_back(newNavigation);
 			newMapList.push_back(newMap);
 		}
 	}
 	
-	map.examined = true;
+	currentMap.examined = true;
 	
 	return newMapList;
 	
 }
 
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
 vector<int> searchPath(){
 	cout << endl << "[SEARCH PATH]" << endl << endl;
 	
 	vector<vector<int>> bestStateList = getBestStateList();
-	vector<int> bestState = bestStateList[0];
 	
-	mapList.emplace_back(Map{bestState});
+	if(bestStateList.size()==0) return {};
+
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
 	
-	/////////////////////////////////////
+	Transition testTransition;
+	testTransition.initialValue = vector<int>(resultSize, -1);
+	testTransition.action = 1;
 	
+	/*vector<Transition> transitionTestList = deduceAllTransition(testTransition);
+	
+	for(Transition transition : transitionTestList){
+		for(int val : transition.initialValue) cout << val << " ";
+		cout << endl;
+	}*/
+	
+	vector<vector<int>> bestStateFullList;
+	for(vector<int> bestState : bestStateList){
+		vector<vector<int>> tempStateList = deduceAllState(bestState);
+		for(vector<int> tempState : tempStateList){
+			bestStateFullList.push_back(tempState);
+			mapList.emplace_back(Map{tempState});
+		}
+	}
+	
+	cout << "Best state:" << endl;
+	for(vector<int> state : bestStateFullList){
+		for(int val : state) cout << val << " ";
+		cout << endl;
+	}
+	
+	// Examine every possible path
 	bool allExamined=false;
 	while(!allExamined){
 		allExamined=true;
@@ -346,28 +404,72 @@ vector<int> searchPath(){
 		}
 	}
 	
-	for(Map map : mapList){
-		cout << "State: ";
-		for(int val : map.state) cout << val << " ";
-		cout << endl;
-		cout << "Coming from:" << endl;
-		for(Transition transition : map.inputTransitionList){
-			cout << "[ACT " << transition.action << "] ";
-			for(int val : transition.initialValue) cout << val << " ";
-			cout << endl;
+	////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	
+	// Create a path from initial to final
+	vector<int> currentState = line.getResult();
+	cout << "Current state: ";
+	for(int val : currentState) cout << val << " ";
+	cout << endl;
+	
+	vector<vector<int>> exploredValues;
+	exploredValues.push_back(currentState);
+	
+	//printMapList();
+	
+	// Find path from current state to final
+	vector<int> actionList;
+	for(Map &map : mapList){
+		if(map.state == currentState){
+			
+			bool finalStateFound = false;
+			while(!finalStateFound){
+			
+				for(Navigation navigation : vector<Navigation>(map.outputNavigationList)){
+				
+					//Check if outcome already seen
+					auto it = find(exploredValues.begin(), exploredValues.end(), navigation.state);
+					if(it != exploredValues.end()) continue;
+					
+					//Get outcomes of outcome state found
+					for(Map subMap : mapList){
+						if(subMap.state == navigation.state){
+							for(Navigation subNavigation : subMap.outputNavigationList){
+							
+								Navigation newNavigation;
+								newNavigation.state = subNavigation.state;
+								newNavigation.actionList = navigation.actionList;
+								for(int action : subNavigation.actionList) newNavigation.actionList.push_back(action);
+								map.outputNavigationList.push_back(newNavigation);
+								
+								finalStateFound = (find(bestStateFullList.begin(), bestStateFullList.end(), newNavigation.state) != bestStateFullList.end());
+
+								if(finalStateFound){
+									actionList = newNavigation.actionList;
+									break;
+								}
+							}
+							break;
+						}
+					}
+					
+					if(finalStateFound) break;
+					
+					//Declare this outcome in explored values list
+					exploredValues.push_back(navigation.state);
+				}
+			}
 		}
-		cout << "Leading to:" << endl;
-		for(Transition transition : map.outputTransitionList){
-			cout << "[ACT " << transition.action << "] ";
-			for(int val : transition.initialValue) cout << val << " ";
-			cout << endl;
-		}
-		cout << endl;
 	}
+	
+	cout << "[ACT ";
+	for(int action : actionList) cout << action << " ";
+	cout << "] " << endl;
 	
 	//exit(1);
 	
-	return {};
+	return actionList;
 	
 }
 

@@ -22,11 +22,14 @@ void Line::pushVal(){
 }
 
 void Line::condTest(){
+
 	if(m_command[0]==1) addVal();
 	if(m_command[0]==2) pushVal();
 	
 	m_reward[0] = 0;
 	for(const int element : m_result) m_reward[0]+=element;
+	
+	//if(m_result[0] == 3 && m_result[1] == 2) m_reward[0] = 50;
 }
 
 void Line::setCommand(vector<int> newCommand){

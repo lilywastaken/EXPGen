@@ -1,13 +1,14 @@
 #include "utils.h"
 #include "line.h"
 #include "deduction.h"
-#include "core.h"
+#include "search.h"
 
 using namespace std;
 
 int timeCount = 0;
 int action = 0;
 int setAmount = 2;
+//vector<int> studySet = {0,1};
 
 int commandSize = 1;
 int resultSize = 2;
@@ -35,12 +36,14 @@ int main(){
 	linkSuperList[1].resize(resultSize); //results
 	linkSuperList[2].resize(rewardSize); //results
 	
-	linkSuperList[1][0] = initLinkResult1();
+	/*linkSuperList[1][0] = initLinkResult1();
 	linkSuperList[1][1] = initLinkResult2();
-	linkSuperList[2][0] = initLinkReward();	
-	printSumUp();
+	linkSuperList[2][0] = initLinkReward();
 	
-	associateStateMem();
+	printSumUp();
+	exit(1);*/
+	
+	//associateStateMem();
 	
 	/*for(int i=0; i<4; i++){
 		line.setCommand({2});
@@ -52,16 +55,13 @@ int main(){
 	}*/
 	
 	auto start_time = chrono::high_resolution_clock::now();
+	srand(time(nullptr));
 	
-	coreProcess();
-	
-	/*
-	
-	while(timeCount<5){
+	while(timeCount<1000){
 	
 		// RESULTS UPDATE
-		cout << "=== " << timeCount << " ===" << endl;
-		line.setCommands({action});
+		cout << endl << "=== " << timeCount << " ===" << endl;
+		line.setCommand({action});
 		line.condTest();
 		line.display();
 		cout << endl;
@@ -69,33 +69,48 @@ int main(){
 		associateStateMem();
 		
 		// PROCESS LOGIC
+		// SET - POS - DEPEND OF SET/TIME - MUTE    
+		associateLink(1, 0, {{0,0},{1,1}}, true);
+		associateLink(1, 1, {{0,0},{1,1}}, true);
+		//associateLink(1, 2, {{0,0},{1,1}}, true);
+		associateLink(2, 0, {{1,0}}, true);
 		
-		observeMethod();
+		// DEFINE NEXT ACTION
 		
-		action = 1;
+		/*if(timeCount==1) action = 1;
+		if(timeCount==2) action = 0;
+		if(timeCount==3) action = 1;
+		if(timeCount==4) action = 0;
+		if(timeCount==5) action = 1;
+		if(timeCount==6) action = 0;
+		if(timeCount==7) action = 1;
+		if(timeCount==8) action = 0;*/
 		
-		if(timeCount==7) action = 2;
-		if(timeCount==9) action = 2;
-		if(timeCount==12) action = 2;
 		
-		if(timeCount==14) action = 2;
-		if(timeCount==15) action = 0;
-		if(timeCount==17) action = 0;
-		if(timeCount==19) action = 0;
-		if(timeCount==21) action = 0;
-		if(timeCount==23) action = 0;
-		if(timeCount==25) action = 0;
-		
+   		action = (rand() % 2) + 1;
+   		
+   		/*if(timeCount==1) action = 1;
+   		if(timeCount==2) action = 0;
+   		if(timeCount==4) action = 1;
+   		if(timeCount==5) action = 0;
+   		if(timeCount==7) action = 1;
+   		if(timeCount==8) action = 0;
+   		if(timeCount==10) action = 1;
+   		if(timeCount==11) action = 0;
+   		
+   		if(timeCount==12) break;*/
+	
 		printSumUp();
 		
 		timeCount++;
 	}
 	
-	*/
+	//printSumUp();
+	
+	vector<int> actionList = searchPath();
 	
 	// Please re-write this function accordingly
 	//reviewCondition();
-	//printSumUp();
 	
 	auto end_time = chrono::high_resolution_clock::now();
 	auto duration = chrono::duration_cast<chrono::milliseconds>(end_time - start_time);

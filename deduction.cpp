@@ -9,14 +9,14 @@ int curLogicID;
 int observedValue;
 Logic* curLogic;
 int curTimestamp;
-
-vector<int> unfoundList;
+vector<pair<int,int>> curStudySetList;
 
 int kill=0;
 
 // LOCAL FUNCTIONS
 //////////////////
 
+// Remove a specific element from the list to copy
 vector<Condition> filterCondition(vector<Condition> conditionList, int element){
 	vector<Condition> filteredConditionList;
 	if(conditionList.size()>1){
@@ -94,16 +94,25 @@ Condition establishCondition(int timestampPrev, int timestampNew){
 
 	Condition condition;
 	
-	for(int i=0; i<setAmount; i++){
+	for(pair<int,int> studySet : curStudySetList){
 	
-		cout << "Memory " << i << " | New timestamp " << timestampNew << ":" << endl << "> ";
-		vector<int> stateNew = stateMemSuperList[timestampNew][i].state;
-		for(int val : stateNew) cout << val << " ";
+		int set = studySet.first;
+		int shift = studySet.second;
+		
+		vector<int> statePrev, stateNew;
+		
+		if(timestampPrev-shift<0) statePrev.assign(resultSize, -1);
+		else statePrev = stateMemSuperList[timestampPrev-shift][set].state;
+		
+		if(timestampNew-shift<0) stateNew.assign(resultSize, -1);
+		else stateNew = stateMemSuperList[timestampNew-shift][set].state;
+		
+		cout << "Set " << set << " | Prev timestamp " << timestampPrev << ":" << endl << "> ";
+		for(int val : statePrev) cout << val << " ";
 		cout << endl;
 		
-		cout << "Memory " << i << " | Prev timestamp " << timestampPrev << ":" << endl << "> ";
-		vector<int> statePrev = stateMemSuperList[timestampPrev][i].state;
-		for(int val : statePrev) cout << val << " ";
+		cout << "Set " << set << " | New timestamp " << timestampNew << ":" << endl << "> ";
+		for(int val : stateNew) cout << val << " ";
 		cout << endl;
 		
 		auto diffList = differenceBetweenStates(statePrev, stateNew);
@@ -112,12 +121,11 @@ Condition establishCondition(int timestampPrev, int timestampNew){
 		cout << endl;
 		
 		for(pair<int,int> diff : diffList){
-			if(i == curSet && diff.first == curLinkPos) continue;
 			Observation newObservation;
-			newObservation.set = i;
+			newObservation.set = set;
 			newObservation.position = diff.first;
 			newObservation.value = diff.second;
-			newObservation.relativeTime = 0;
+			newObservation.shift = shift;
 			condition.observationList.push_back(newObservation);
 			cout << "[ADD CONDITION]" << endl;
 			printObservationList({newObservation});
@@ -130,55 +138,11 @@ Condition establishCondition(int timestampPrev, int timestampNew){
 	if(condition.observationList.size()>0) return condition;
 	
 	// PROBLEM : no difference found
-	
-	cout << endl << "No diff found, searching time diff..." << endl;
-	
-	vector<int> differences;
-	for(int i=0; i<setAmount; i++){
-	
-		vector<int> statePrevBefore, stateNewBefore;
-		
-		if(timestampPrev-1<0) statePrevBefore.assign(resultSize, -1);
-		else statePrevBefore = stateMemSuperList[timestampPrev-1][i].state;
-		
-		if(timestampNew-1<0) stateNewBefore.assign(resultSize, -1);
-		else stateNewBefore = stateMemSuperList[timestampNew-1][i].state;
-	
-		cout << "Set " << i << endl;
-		
-		auto diffList = differenceBetweenStates(statePrevBefore,stateNewBefore);
-		
-		cout << "State prev before: ";
-		for(auto element : statePrevBefore) cout << element << " ";
-		cout << endl;
-		
-		cout << "State new before: ";
-		for(auto element : stateNewBefore) cout << element << " ";
-		cout << endl;
-		
-		cout << "State diff: ";
-		for(auto element : diffList) cout << element.first << "/" << element.second << " ";
-		cout << endl;
-		
-		for(pair<int,int> diff : diffList){
-			Observation newObservation;
-			newObservation.set = i;
-			newObservation.position = diff.first;
-			newObservation.value = diff.second;
-			newObservation.relativeTime = 1;
-			condition.observationList.push_back(newObservation);
-			cout << endl << "[ADD TIME CONDITION]" << endl;
-			printObservationList({newObservation});
-		}
-		cout << endl;
-		
-	}
-	
-	return condition;
+	cout << endl << "No diff found (incorrect inputs)" << endl;
+	exit(1);
 
 }
 
-// Correct condition on conflicting states
 vector<Condition> correctCondition(Condition condition, int timestamp, vector<int> conflictingBellow){
 
 	vector<Condition> correctedConditionList;
@@ -186,13 +150,6 @@ vector<Condition> correctCondition(Condition condition, int timestamp, vector<in
 	for(int conflicting : conflictingBellow){
 	
 		Condition correctedCondition = establishCondition(conflicting, timestamp);
-		
-		if(correctedCondition.observationList.size()==0){
-			cout << "CAN'T OBSERVE ANY CHANGE" << endl;
-			unfoundList.push_back(conflicting); 
-			exit(1);
-			return correctedConditionList;
-		}
 		
 		for(Observation observation : condition.observationList) correctedCondition.observationList.push_back(observation);
 		correctedConditionList.push_back(correctedCondition);
@@ -205,7 +162,7 @@ vector<Condition> correctCondition(Condition condition, int timestamp, vector<in
 
 vector<Condition> checkCondition(Condition condition, int logicPos, int timestamp){
 
-	if(kill++==500){
+	if(kill++==5000){
 		cout << "Loop..." << endl;
 		exit(1);
 	}
@@ -297,39 +254,6 @@ pair<int,int> checkAbove(){
 	return(make_pair(-1,-1));
 }
 
-vector<Condition> generateConditionFromState(){
-
-	cout << endl << "[SEARCH DIFF]" << endl;
-	
-	vector<Condition> conditionList;
-	
-	// For each previous link
-	for(int i=curLogicID; i>=0; i--){
-	
-		cout << endl << "Check link " << i << endl;
-		
-		vector<int> timestampList = linkSuperList[curSet][curLinkPos].logicList[i].timestampList;
-		
-		// For each attached memory
-		for(int j=timestampList.size()-1; j>=0; j--){
-		
-			/*int foundResult = output(curSet, curLinkPos, curTimestamp);
-			cout << "Computed value: " << foundResult << endl;
-			if(foundResult==observedValue) break;*/
-			
-			Condition newCondition = establishCondition(timestampList[j], curTimestamp);
-				
-			if(newCondition.observationList.size()==0){
-				cout << "CAN'T OBSERVE ANY CHANGE" << endl;
-				unfoundList.push_back(timestampList[j]); 
-			}
-			else conditionList.push_back(newCondition);
-		}
-	}
-	
-	return conditionList;
-}
-
 vector<int> findTimestamp(int logicID, int conditionID){
 
 	vector<int> foundTimestampList;
@@ -385,6 +309,37 @@ void correctAbove(){
 	}
 }
 
+vector<Condition> generateConditionFromState(){
+
+	cout << endl << "[SEARCH DIFF]" << endl;
+	
+	vector<Condition> conditionList;
+	
+	// For each previous link
+	for(int i=curLogicID-1; i>=0; i--){
+	
+		cout << endl << "Check link " << i << endl;
+		
+		vector<int> timestampList = linkSuperList[curSet][curLinkPos].logicList[i].timestampList;
+		
+		// For each attached memory
+		for(int j=timestampList.size()-1; j>=0; j--){
+		
+			/*int foundResult = output(curSet, curLinkPos, curTimestamp);
+			cout << "Computed value: " << foundResult << endl;
+			if(foundResult==observedValue) break;*/
+			
+			
+			Condition newCondition = establishCondition(timestampList[j], curTimestamp);
+				
+			if(newCondition.observationList.size()==0) cout << "CAN'T OBSERVE ANY CHANGE" << endl;
+			else conditionList.push_back(newCondition);
+		}
+	}
+	
+	return conditionList;
+}
+
 void solveLogic(){
 
 	cout << endl << "[SOLVE LOGIC]" << endl;
@@ -419,13 +374,13 @@ void solveLogic(){
 		processChecked(checkedConditionList, curLogicID, curLogic);
 		
 	}
-	
 }
+
 
 // MAIN FUNCTIONS
 //////////////////
 
-ALResult associateLink(int set, int linkPos, bool mute){
+void associateLink(int set, int linkPos, vector<pair<int,int>> studySetList, bool mute){
 
 	ofstream null_stream("/dev/null");
 	streambuf* old_cout = cout.rdbuf();
@@ -436,7 +391,8 @@ ALResult associateLink(int set, int linkPos, bool mute){
 
 	curSet = set;
 	curLinkPos = linkPos;
-	curTimestamp = timeCount;
+	curTimestamp = stateMemSuperList.size()-1;
+	curStudySetList = studySetList;
 	
 	observedValue = stateMemSuperList.back()[curSet].state[curLinkPos];
 	
@@ -454,30 +410,32 @@ ALResult associateLink(int set, int linkPos, bool mute){
 		newLogic.timestampList.push_back(timeCount);
 		newLogic.outcome = observedValue;
 		linkSuperList[curSet][curLinkPos].logicList.push_back(newLogic);
+		
 		curLogicID = linkSuperList[curSet][curLinkPos].logicList.size()-1;
+		curLogic = &linkSuperList[curSet][curLinkPos].logicList[curLogicID];
+		cout << "Cur logic ID: " << curLogicID << endl;
+		solveLogic();
+	
 	}
 	else{
 		cout << "Logic " << observedValue << " known, adding timestamp..." << endl;
 		linkSuperList[curSet][curLinkPos].logicList[logicFound].timestampList.push_back(timeCount);
+		
+		int foundResult = output(curSet, curLinkPos, curTimestamp);
+		if(foundResult == observedValue){
+			cout << "Functionnal logic, no process" << endl;
+			cout.rdbuf(old_cout);
+			return;
+		}
+		cout << "Logic doesn't match current definition, searching differences" << endl;
+		
 		curLogicID = logicFound;
-	}
-	
-	/////////////////////////////////////////////////
-	
-	unfoundList.clear();
-	
-	int foundResult = output(curSet, curLinkPos, curTimestamp);
-	bool matchingCondition = (foundResult==observedValue);
-	
-	if(!matchingCondition){
-		curLogic = &linkSuperList[curSet][curLinkPos].logicList[curLogicID];
+		curLogic = &linkSuperList[curSet][curLinkPos].logicList[logicFound];
 		cout << "Cur logic ID: " << curLogicID << endl;
 		solveLogic();
 		correctAbove();
 	}
 	
 	cout.rdbuf(old_cout);
-	ALResult alresult = {logicFound!=-1,matchingCondition,unfoundList};
-	return alresult;
-	
+		
 }

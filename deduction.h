@@ -9,6 +9,6 @@ using namespace std;
 void reviewCondition();
 vector<bool> checkLogic();
 
-ALResult associateLink(int set, int linkPos, bool mute);
+void associateLink(int set, int linkPos, vector<pair<int,int>> studySetList, bool mute);
 
 #endif

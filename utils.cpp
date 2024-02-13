@@ -4,20 +4,20 @@
 //////////////////
 
 Link initLinkResult1(){
-	Observation observation1_1_1 = {0,0,1,0};
-	Observation observation1_1_2 = {1,0,0,1};
-	Observation observation1_2_1 = {0,0,0,0};
-	Observation observation1_2_2 = {1,0,1,1};
+	Observation observation1_1_1 = {0,0,1};
+	Observation observation1_1_2 = {1,0,0};
+	Observation observation1_2_1 = {0,0,0};
+	Observation observation1_2_2 = {1,0,1};
 	
-	Observation observation2_1_1 = {0,0,1,0};
-	Observation observation2_1_2 = {1,0,1,1};
-	Observation observation2_2_1 = {0,0,0,0};
-	Observation observation2_2_2 = {1,0,2,1};
+	Observation observation2_1_1 = {0,0,1};
+	Observation observation2_1_2 = {1,0,1};
+	Observation observation2_2_1 = {0,0,0};
+	Observation observation2_2_2 = {1,0,2};
 	
-	Observation observation3_1_1 = {0,0,1,0};
-	Observation observation3_1_2 = {1,0,2,1};
-	Observation observation3_2_1 = {0,0,0,0};
-	Observation observation3_2_2 = {1,0,3,1};
+	Observation observation3_1_1 = {0,0,1};
+	Observation observation3_1_2 = {1,0,2};
+	Observation observation3_2_1 = {0,0,0};
+	Observation observation3_2_2 = {1,0,3};
 	
 	Condition condition1_1 = {{observation1_1_1,observation1_1_2}};
 	Condition condition1_2 = {{observation1_2_1,observation1_2_2}};
@@ -37,26 +37,26 @@ Link initLinkResult1(){
 }
 
 Link initLinkResult2(){
-	Observation observation1_1_1 = {0,0,2,0};
-	Observation observation1_1_2 = {1,0,1,1};
-	Observation observation1_2_1 = {0,0,1,0};
-	Observation observation1_2_2 = {1,1,1,1};
-	Observation observation1_3_1 = {0,0,0,0};
-	Observation observation1_3_2 = {1,1,1,1};
+	Observation observation1_1_1 = {0,0,2};
+	Observation observation1_1_2 = {1,0,1};
+	Observation observation1_2_1 = {0,0,1};
+	Observation observation1_2_2 = {1,1,1};
+	Observation observation1_3_1 = {0,0,0};
+	Observation observation1_3_2 = {1,1,1};
 	
-	Observation observation2_1_1 = {0,0,2,0};
-	Observation observation2_1_2 = {1,0,2,1};
-	Observation observation2_2_1 = {0,0,1,0};
-	Observation observation2_2_2 = {1,1,2,1};
-	Observation observation2_3_1 = {0,0,0,0};
-	Observation observation2_3_2 = {1,1,2,1};
+	Observation observation2_1_1 = {0,0,2};
+	Observation observation2_1_2 = {1,0,2};
+	Observation observation2_2_1 = {0,0,1};
+	Observation observation2_2_2 = {1,1,2};
+	Observation observation2_3_1 = {0,0,0};
+	Observation observation2_3_2 = {1,1,2};
 	
-	Observation observation3_1_1 = {0,0,2,0};
-	Observation observation3_1_2 = {1,0,3,1};
-	Observation observation3_2_1 = {0,0,1,0};
-	Observation observation3_2_2 = {1,1,3,1};
-	Observation observation3_3_1 = {0,0,0,0};
-	Observation observation3_3_2 = {1,1,3,1};
+	Observation observation3_1_1 = {0,0,2};
+	Observation observation3_1_2 = {1,0,3};
+	Observation observation3_2_1 = {0,0,1};
+	Observation observation3_2_2 = {1,1,3};
+	Observation observation3_3_1 = {0,0,0};
+	Observation observation3_3_2 = {1,1,3};
 	
 	
 	
@@ -81,8 +81,8 @@ Link initLinkResult2(){
 }
 
 Link initLinkReward(){
-	Observation observation6_1 = {1,0,3,0};
-	Observation observation6_2 = {1,1,3,0};
+	Observation observation6_1 = {1,0,3};
+	Observation observation6_2 = {1,1,3};
 	Condition condition6 = {{observation6_1,observation6_2}};
 	Logic logic6 = {{}, {condition6}, 6};
 	return {{logic6}};
@@ -90,10 +90,7 @@ Link initLinkReward(){
 
 void printObservationList(vector<Observation> observationList){
 	for(Observation observation : observationList){
-		if(observation.relativeTime==0)
-			cout << "[" << "set " << observation.set << ": " << observation.position << "/" << observation.value << "], ";
-		else
-			cout << "[" << "(-" << observation.relativeTime << ") set " << observation.set << ": " << observation.position << "/" << observation.value << "], ";
+		cout << "[" << "(" << observation.shift << ") set " << observation.set << ": " << observation.position << "/" << observation.value << "], ";
 	}
 	cout << "End" << endl;
 }
@@ -102,6 +99,7 @@ void printSumUp(){
 	cout << endl << "==== [SUM UP " << timeCount << "] ====" << endl;
 	//line.display();
 	
+	cout << endl << ">>> [SET DATA]" << endl;
 	for(int i=0; i<linkSuperList[1].size(); i++){
 		Link myLink = linkSuperList[1][i];
 		cout << "Result " << i << ":" << endl;
@@ -114,6 +112,10 @@ void printSumUp(){
 		}
 	}
 	
+	cout << endl;
+	return;
+	
+	cout << endl << ">>> [SET REWARD]" << endl;
 	for(int i=0; i<linkSuperList[2].size(); i++){
 		Link myLink = linkSuperList[2][i];
 		cout << "Result " << i << ":" << endl;
@@ -134,8 +136,8 @@ void printSumUp(){
 bool testLogic(int timestamp, Condition condition){
 	for(Observation observation : condition.observationList){
 		int valToCheck;
-		if(timestamp-observation.relativeTime<0) valToCheck=-1;
-		else valToCheck = stateMemSuperList[timestamp-observation.relativeTime][observation.set].state[observation.position];
+		if(timestamp-observation.shift<0) valToCheck=-1;
+		else valToCheck = stateMemSuperList[timestamp-observation.shift][observation.set].state[observation.position];
 		if(valToCheck!=observation.value) return false;
 	}
 	return true;
@@ -154,11 +156,13 @@ int output(int set, int pos, int timestamp){
 //////////////////
 
 void associateStateMem(){
-	StateMem memoryCommand = StateMem{line.getCommand()};
-	StateMem memoryResult = StateMem{line.getResult()};
-	StateMem memoryReward = StateMem{line.getReward()};
+
+	StateMem memoryCommand = {line.getCommand()};
+	StateMem memoryResult = {line.getResult()};
+	StateMem memoryReward = {line.getReward()};
 	
 	vector<StateMem> allMem = {memoryCommand, memoryResult, memoryReward};
+	
 	stateMemSuperList.push_back(allMem);
 }
 
