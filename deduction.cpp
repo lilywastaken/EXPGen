@@ -16,6 +16,18 @@ int kill=0;
 // LOCAL FUNCTIONS
 //////////////////
 
+// Sorting the observations by set
+bool compareObservationBySet(const Observation& obs1, const Observation& obs2){
+	if(obs1.set < obs2.set) return true;
+	if(obs1.set == obs2.set) return (obs1.position < obs2.position);
+    return false;
+}
+
+// Sorting the logic by observation
+bool compareConditionByObservation(const Condition& cond1, const Condition& cond2){
+	return (cond1.observationList.size() < cond2.observationList.size());
+}
+
 // Remove a specific element from the list to copy
 vector<Condition> filterCondition(vector<Condition> conditionList, int element){
 	vector<Condition> filteredConditionList;
@@ -436,6 +448,18 @@ void associateLink(int set, int linkPos, vector<pair<int,int>> studySetList, boo
 		correctAbove();
 	}
 	
+	// Sort every logic to get a proper view
+	for(vector<Link> &linkList : linkSuperList){
+		for(Link &link : linkList){
+			for(Logic &logic : link.logicList){
+				for(Condition &condition : logic.conditionList){
+					sort(condition.observationList.begin(), condition.observationList.end(), compareObservationBySet);
+				}
+				sort(logic.conditionList.begin(), logic.conditionList.end(), compareConditionByObservation);
+			}
+		}
+	}
+	
 	cout.rdbuf(old_cout);
-		
+	
 }

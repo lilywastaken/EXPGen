@@ -2,16 +2,16 @@
 #include "line.h"
 #include "deduction.h"
 #include "search.h"
+#include "pattern.h"
 
 using namespace std;
 
 int timeCount = 0;
 int action = 0;
 int setAmount = 2;
-//vector<int> studySet = {0,1};
 
 int commandSize = 1;
-int resultSize = 2;
+int resultSize = 3;
 int rewardSize = 1;
 
 Line line(commandSize,resultSize,rewardSize);
@@ -24,6 +24,8 @@ vector<int> actionList = {0, 1, 2};
 vector<int> valueList = {0, 1, 2, 3};
 
 int main(){
+
+    srand(24);
 
 	vector<int> durList;
 
@@ -55,12 +57,12 @@ int main(){
 	}*/
 	
 	auto start_time = chrono::high_resolution_clock::now();
-	srand(time(nullptr));
 	
-	while(timeCount<1000){
+	int totalExp(1000);
+	while(timeCount<totalExp){
 	
 		// RESULTS UPDATE
-		cout << endl << "=== " << timeCount << " ===" << endl;
+		cout << endl << "=== " << timeCount+1 << "/" << totalExp << " ===" << endl;
 		line.setCommand({action});
 		line.condTest();
 		line.display();
@@ -72,40 +74,18 @@ int main(){
 		// SET - POS - DEPEND OF SET/TIME - MUTE    
 		associateLink(1, 0, {{0,0},{1,1}}, true);
 		associateLink(1, 1, {{0,0},{1,1}}, true);
-		//associateLink(1, 2, {{0,0},{1,1}}, true);
+		associateLink(1, 2, {{0,0},{1,1}}, true);
 		associateLink(2, 0, {{1,0}}, true);
 		
 		// DEFINE NEXT ACTION
-		
-		/*if(timeCount==1) action = 1;
-		if(timeCount==2) action = 0;
-		if(timeCount==3) action = 1;
-		if(timeCount==4) action = 0;
-		if(timeCount==5) action = 1;
-		if(timeCount==6) action = 0;
-		if(timeCount==7) action = 1;
-		if(timeCount==8) action = 0;*/
-		
-		
-   		action = (rand() % 2) + 1;
-   		
-   		/*if(timeCount==1) action = 1;
-   		if(timeCount==2) action = 0;
-   		if(timeCount==4) action = 1;
-   		if(timeCount==5) action = 0;
-   		if(timeCount==7) action = 1;
-   		if(timeCount==8) action = 0;
-   		if(timeCount==10) action = 1;
-   		if(timeCount==11) action = 0;
-   		
-   		if(timeCount==12) break;*/
+		action = (rand() % 3);
 	
-		printSumUp();
-		
 		timeCount++;
 	}
 	
-	//printSumUp();
+	printSumUp();
+	
+	searchLogicPattern();
 	
 	vector<int> actionList = searchPath();
 	
